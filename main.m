@@ -125,7 +125,6 @@ int main(int argc, const char * argv[]) {
                             XRStreamedPowerRun *run = [NSUnarchiver unarchiveObjectWithData:traceData];
                             double testStartTime = [run getStartTime];
                             //printf("\n%lf\n", [run getStartTime]);
-                            // 解析流量数据
                             NSString *networkResultJsonString = nil;
                             NSString *networkResultFIle = [NSString stringWithFormat:@"%@/Trace%@.run/network_activity.dat.archive",inputTraceFile,fileBasename];
                             if(![fileManager fileExistsAtPath:networkResultFIle]) {
@@ -139,7 +138,6 @@ int main(int argc, const char * argv[]) {
                                 int lineCount = (int)[dict fileSize]/size;
                                 NSMutableArray *outArray = [[NSMutableArray alloc] init];
                                 NSArray *nameArray= [NSArray arrayWithObjects:@"startTime",@"duration",@"wifiPacketsIn",@"wifiPacketsOut",@"wifiBytesIn",@"wifiBytesOut",nil];
-                                // 干掉第一条貌似不正确的数据
                                 for(int i =1 ;i<lineCount;i++) {
                                     //printf("line:%d\n",i);
                                     int dataCount = 26;
@@ -170,7 +168,6 @@ int main(int argc, const char * argv[]) {
                                             [tempDict setObject:[NSNumber numberWithDouble:number] forKey:nameArray[j]];
                                         }
                                     }
-                                    // 增加结束时间这一列
                                     NSString *duration = [tempDict objectForKey:@"duration"];
                                     NSString *startTime = [tempDict objectForKey:@"startTime"];
                                     double endtime = [duration doubleValue] + [startTime doubleValue] + testStartTime;
