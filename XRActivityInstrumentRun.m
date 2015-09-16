@@ -114,6 +114,7 @@
 {
     if((self = [super initWithCoder:decoder]))
     {
+        [decoder decodeObject]; //Add for XCode 7
         sampleData = [decoder decodeObject];
         [decoder decodeObject];
     }
