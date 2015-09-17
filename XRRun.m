@@ -33,6 +33,7 @@
         args = [[decoder decodeObject] boolValue];
         [decoder decodeObject];
         [decoder decodeObject];
+        [decoder decodeObject]; //patch for XCode 7
     }
     return self;
 }

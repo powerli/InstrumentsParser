@@ -87,7 +87,6 @@
 {
     if((self = [super initWithCoder:decoder]))
     {
-        [decoder decodeObject]; //patch for XCode 7
         sampleData = [decoder decodeObject];
         [decoder decodeObject];
         [decoder decodeObject];
