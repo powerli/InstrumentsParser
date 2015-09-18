@@ -16,6 +16,152 @@
 #import "XRObjectAllocRun.h"
 #import "XRVideoCardRun.h"
 
+void parseNetworkActivity(NSString *fileBasename, NSString *inputTraceFile, double testStartTime, NSString *outputdir) {
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSError *error = nil;
+
+    //printf("\n%lf\n", [run getStartTime]);
+    NSString *networkResultJsonString = nil;
+    NSString *networkResultFile = [NSString stringWithFormat:@"%@/Trace%@.run/network_activity.dat.archive",inputTraceFile,fileBasename];
+    if(![fileManager fileExistsAtPath:networkResultFile]) {
+        //NSLog(@"no network result exists!!!");
+    } else {
+        //NSLog(@"network result file exists!!!");
+        NSDictionary *dict = [fileManager attributesOfItemAtPath:networkResultFile error:&error];
+        //NSLog(@"size=%lld",[dict fileSize]);
+        NSFileHandle *fileHandle = [NSFileHandle fileHandleForReadingAtPath:networkResultFile];
+        int size = 208;
+        int lineCount = (int)[dict fileSize]/size;
+        NSMutableArray *outArray = [[NSMutableArray alloc] init];
+        NSArray *nameArray= [NSArray arrayWithObjects:@"startTime",@"duration",@"wifiPacketsIn",@"wifiPacketsOut",@"wifiBytesIn",@"wifiBytesOut",nil];
+        for(int i =1 ;i<lineCount;i++) {
+            //printf("line:%d\n",i);
+            int dataCount = 26;
+            NSMutableDictionary *tempDict = [[NSMutableDictionary alloc] init];
+            for(int j=0;j<dataCount;j++) {
+                [fileHandle seekToFileOffset:i*size+j*8];
+                NSData *data = [fileHandle readDataOfLength:8];
+                //NSLog(@"%@",data);
+                Byte *byteData = (Byte *)[data bytes];
+                
+                Byte temp = byteData[0];
+                byteData[0] = byteData[7];
+                byteData[7] = temp;
+                temp = byteData[1];
+                byteData[1] = byteData[6];
+                byteData[6] = temp;
+                temp = byteData[2];
+                byteData[2] = byteData[5];
+                byteData[5] = temp;
+                temp = byteData[3];
+                byteData[3] = byteData[4];
+                byteData[4] = temp;
+                
+                double* array_of_doubles = (double*)byteData;
+                if(j<[nameArray count]) {
+                    NSString *str = [NSString stringWithFormat:@"%lf",array_of_doubles[0]];
+                    double number = [str doubleValue];
+                    [tempDict setObject:[NSNumber numberWithDouble:number] forKey:nameArray[j]];
+                }
+            }
+            NSString *duration = [tempDict objectForKey:@"duration"];
+            NSString *startTime = [tempDict objectForKey:@"startTime"];
+            double endtime = [duration doubleValue] + [startTime doubleValue] + testStartTime;
+            //NSLog(@"%lf",endtime);
+            //NSString *endStr = [NSString stringWithFormat:@"%.0lf",endtime];
+            [tempDict setObject:[NSNumber numberWithDouble:endtime] forKey:@"Timestamp"];
+            [outArray addObject:tempDict];
+            //NSLog(@"%@",tempDict);
+        }
+        //NSLog(@"%@",outArray);
+        NSData *jsonData = [NSJSONSerialization dataWithJSONObject:outArray options:NSJSONWritingPrettyPrinted error:&error];
+        if([jsonData length] >0 && error == nil){
+            NSString *jsonString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+            networkResultJsonString = jsonString;
+            //NSString *jsonfile = [NSString stringWithFormat:@"%@/networkresult",outputdir];
+            //[jsonString writeToFile:jsonfile atomically:YES encoding:NSUTF8StringEncoding error:&error];
+            //NSLog(@"%@",jsonString);
+        }
+    }
+    if(networkResultJsonString!=nil) {
+        NSString *jsonfile = [NSString stringWithFormat:@"%@/NetworkActivity-%@",outputdir,fileBasename];
+        [networkResultJsonString writeToFile:jsonfile atomically:YES encoding:NSUTF8StringEncoding error:&error];
+    }
+}
+
+void parseEnergyLevel(NSString *fileBasename, NSString *inputTraceFile, double testStartTime, NSString *outputdir) {
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSError *error = nil;
+    
+    //printf("\n%lf\n", [run getStartTime]);
+    NSString *levelResultJsonString = nil;
+    NSString *levelResultFile = [NSString stringWithFormat:@"%@/Trace%@.run/level.dat.archive",inputTraceFile,fileBasename];
+    if(![fileManager fileExistsAtPath:levelResultFile]) {
+        //NSLog(@"no network result exists!!!");
+    } else {
+        //NSLog(@"network result file exists!!!");
+        NSDictionary *dict = [fileManager attributesOfItemAtPath:levelResultFile error:&error];
+        //NSLog(@"size=%lld",[dict fileSize]);
+        NSFileHandle *fileHandle = [NSFileHandle fileHandleForReadingAtPath:levelResultFile];
+        int size = 24;
+        int lineCount = (int)[dict fileSize]/size;
+        NSMutableArray *outArray = [[NSMutableArray alloc] init];
+        NSArray *nameArray= [NSArray arrayWithObjects:@"startTime", @"level", @"level",nil];
+        for(int i = 0; i < lineCount; i++) {
+            //printf("line:%d\n",i);
+            int dataCount = 3;
+            NSMutableDictionary *tempDict = [[NSMutableDictionary alloc] init];
+            for(int j = 0; j < dataCount; j++) {
+                [fileHandle seekToFileOffset:i*size+j*8];
+                NSData *data = [fileHandle readDataOfLength:8];
+                //NSLog(@"%@",data);
+                Byte *byteData = (Byte *)[data bytes];
+                
+                Byte temp = byteData[0];
+                byteData[0] = byteData[7];
+                byteData[7] = temp;
+                temp = byteData[1];
+                byteData[1] = byteData[6];
+                byteData[6] = temp;
+                temp = byteData[2];
+                byteData[2] = byteData[5];
+                byteData[5] = temp;
+                temp = byteData[3];
+                byteData[3] = byteData[4];
+                byteData[4] = temp;
+                
+                double* array_of_doubles = (double*)byteData;
+                if(j < [nameArray count] && ![nameArray[j] isEqualToString:@""] ) {
+                    NSString *str = [NSString stringWithFormat:@"%lf",array_of_doubles[0]];
+                    double number = [str doubleValue];
+                    [tempDict setObject:[NSNumber numberWithDouble:number] forKey:nameArray[j]];
+                }
+            }
+            NSString *duration = [tempDict objectForKey:@"duration"];
+            NSString *startTime = [tempDict objectForKey:@"startTime"];
+            double endtime = [duration doubleValue] + [startTime doubleValue] + testStartTime;
+            //NSLog(@"%lf",endtime);
+            //NSString *endStr = [NSString stringWithFormat:@"%.0lf",endtime];
+            [tempDict setObject:[NSNumber numberWithDouble:endtime] forKey:@"Timestamp"];
+            [outArray addObject:tempDict];
+            //NSLog(@"%@",tempDict);
+        }
+        //NSLog(@"%@",outArray);
+        NSData *jsonData = [NSJSONSerialization dataWithJSONObject:outArray options:NSJSONWritingPrettyPrinted error:&error];
+        if([jsonData length] >0 && error == nil){
+            NSString *jsonString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+            levelResultJsonString = jsonString;
+            //NSString *jsonfile = [NSString stringWithFormat:@"%@/networkresult",outputdir];
+            //[jsonString writeToFile:jsonfile atomically:YES encoding:NSUTF8StringEncoding error:&error];
+            //NSLog(@"%@",jsonString);
+        }
+    }
+    if(levelResultJsonString!=nil) {
+        NSString *jsonfile = [NSString stringWithFormat:@"%@/EnergyLevel-%@",outputdir,fileBasename];
+        [levelResultJsonString writeToFile:jsonfile atomically:YES encoding:NSUTF8StringEncoding error:&error];
+    }
+}
+
 int main(int argc, const char * argv[]) {
     @autoreleasepool {
         
@@ -25,6 +171,9 @@ int main(int argc, const char * argv[]) {
         NSString *outputdir = [standardDefaults stringForKey:@"o"];
         
         //NSLog(@"appname[%@] inputfile[%@] outputfile[%@]",appname,inputfile,outputfile);
+        
+        appname = @"IphoneCom";
+        inputdir = @"/Users/scottwu/Downloads/newenergy.trace";
         
         if (appname == nil || inputdir == nil ) {
             printf("InstrumentsParser -p process_name -i result.trace -o /a/b/c \nor InstrumentsParser -p process_name -i result.trace\n");
@@ -124,73 +273,8 @@ int main(int argc, const char * argv[]) {
                         }else if([Utils grepFile:resultUnzippedFile searchKeyword:@"XRStreamedPowerRun"]){
                             XRStreamedPowerRun *run = [NSUnarchiver unarchiveObjectWithData:traceData];
                             double testStartTime = [run getStartTime];
-                            //printf("\n%lf\n", [run getStartTime]);
-                            NSString *networkResultJsonString = nil;
-                            NSString *networkResultFIle = [NSString stringWithFormat:@"%@/Trace%@.run/network_activity.dat.archive",inputTraceFile,fileBasename];
-                            if(![fileManager fileExistsAtPath:networkResultFIle]) {
-                                //NSLog(@"no network result exists!!!");
-                            } else {
-                                //NSLog(@"network result file exists!!!");
-                                NSDictionary *dict = [fileManager attributesOfItemAtPath:networkResultFIle error:&error];
-                                //NSLog(@"size=%lld",[dict fileSize]);
-                                NSFileHandle *fileHandle = [NSFileHandle fileHandleForReadingAtPath:networkResultFIle];
-                                int size = 208;
-                                int lineCount = (int)[dict fileSize]/size;
-                                NSMutableArray *outArray = [[NSMutableArray alloc] init];
-                                NSArray *nameArray= [NSArray arrayWithObjects:@"startTime",@"duration",@"wifiPacketsIn",@"wifiPacketsOut",@"wifiBytesIn",@"wifiBytesOut",nil];
-                                for(int i =1 ;i<lineCount;i++) {
-                                    //printf("line:%d\n",i);
-                                    int dataCount = 26;
-                                    NSMutableDictionary *tempDict = [[NSMutableDictionary alloc] init];
-                                    for(int j=0;j<dataCount;j++) {
-                                        [fileHandle seekToFileOffset:i*size+j*8];
-                                        NSData *data = [fileHandle readDataOfLength:8];
-                                        //NSLog(@"%@",data);
-                                        Byte *byteData = (Byte *)[data bytes];
-                                        
-                                        Byte temp = byteData[0];
-                                        byteData[0] = byteData[7];
-                                        byteData[7] = temp;
-                                        temp = byteData[1];
-                                        byteData[1] = byteData[6];
-                                        byteData[6] = temp;
-                                        temp = byteData[2];
-                                        byteData[2] = byteData[5];
-                                        byteData[5] = temp;
-                                        temp = byteData[3];
-                                        byteData[3] = byteData[4];
-                                        byteData[4] = temp;
-                                        
-                                        double* array_of_doubles = (double*)byteData;
-                                        if(j<[nameArray count]) {
-                                            NSString *str = [NSString stringWithFormat:@"%lf",array_of_doubles[0]];
-                                            double number = [str doubleValue];
-                                            [tempDict setObject:[NSNumber numberWithDouble:number] forKey:nameArray[j]];
-                                        }
-                                    }
-                                    NSString *duration = [tempDict objectForKey:@"duration"];
-                                    NSString *startTime = [tempDict objectForKey:@"startTime"];
-                                    double endtime = [duration doubleValue] + [startTime doubleValue] + testStartTime;
-                                    //NSLog(@"%lf",endtime);
-                                    //NSString *endStr = [NSString stringWithFormat:@"%.0lf",endtime];
-                                    [tempDict setObject:[NSNumber numberWithDouble:endtime] forKey:@"Timestamp"];
-                                    [outArray addObject:tempDict];
-                                    //NSLog(@"%@",tempDict);
-                                }
-                                //NSLog(@"%@",outArray);
-                                NSData *jsonData = [NSJSONSerialization dataWithJSONObject:outArray options:NSJSONWritingPrettyPrinted error:&error];
-                                if([jsonData length] >0 && error == nil){
-                                    NSString *jsonString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
-                                    networkResultJsonString = jsonString;
-                                    //NSString *jsonfile = [NSString stringWithFormat:@"%@/networkresult",outputdir];
-                                    //[jsonString writeToFile:jsonfile atomically:YES encoding:NSUTF8StringEncoding error:&error];
-                                    //NSLog(@"%@",jsonString);
-                                }
-                            }
-                            if(networkResultJsonString!=nil) {
-                                NSString *jsonfile = [NSString stringWithFormat:@"%@/NetworkActivity-%@",outputdir,fileBasename];
-                                [networkResultJsonString writeToFile:jsonfile atomically:YES encoding:NSUTF8StringEncoding error:&error];
-                            }
+                            parseNetworkActivity(fileBasename, inputTraceFile, testStartTime, outputdir);
+                            parseEnergyLevel(fileBasename, inputTraceFile, testStartTime, outputdir);
                         }
                     }
                 }
