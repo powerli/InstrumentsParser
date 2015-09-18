@@ -172,8 +172,8 @@ int main(int argc, const char * argv[]) {
         
         //NSLog(@"appname[%@] inputfile[%@] outputfile[%@]",appname,inputfile,outputfile);
         
-        appname = @"IphoneCom";
-        inputdir = @"/Users/scottwu/Downloads/newenergy.trace";
+        //appname = @"IphoneCom";
+        //inputdir = @"/Users/scottwu/Downloads/newenergy.trace";
         
         if (appname == nil || inputdir == nil ) {
             printf("InstrumentsParser -p process_name -i result.trace -o /a/b/c \nor InstrumentsParser -p process_name -i result.trace\n");
