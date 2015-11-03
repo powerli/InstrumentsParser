@@ -19,6 +19,7 @@
         [decoder decodeObject];//id
         [decoder decodeObject];//id
         [decoder decodeObject];//id
+        [decoder decodeObject];//id
     }
     return self;
 }
