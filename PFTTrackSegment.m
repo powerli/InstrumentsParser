@@ -15,12 +15,14 @@
 	if((self = [super init]))
 	{
 		[decoder decodeObject];
-		[decoder decodeObject];
-        [decoder decodeObject];
-		
-		// In seconds
-		durationTime = [[decoder decodeObject] doubleValue];
-		
+		NSNumber *number = [decoder decodeObject];
+		// Fix for Xcode 7.3
+		if (strcmp([number objCType], @encode(double)) == 0) {
+			durationTime = [number doubleValue];
+		} else {
+			[decoder decodeObject];
+			durationTime = [[decoder decodeObject] doubleValue];
+		}
 		[decoder decodeObject];
 	}
 	
